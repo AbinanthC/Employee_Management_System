@@ -6,7 +6,7 @@ from services.validator import (
     validate_salary,
 )
 
-def add_employee():
+def add_employee(employee_name,department,salary,email):
     connection = get_connection()
 
     if connection is None:
@@ -15,21 +15,20 @@ def add_employee():
     try:
         cursor = connection.cursor()
 
-        employee_name = input("Enter Employee Name: ").strip()
+        employee_name = employee_name.strip()
 
         if not validate_name(employee_name):
             print("Employee name cannot be empty.")
             return
 
-        department = input("Enter Department: ").strip()
+        department = department.strip()
 
-        salary = input("Enter Salary: ")
 
         if not validate_salary(salary):
             print("Invalid salary.")
             return
 
-        email = input("Enter Email: ").strip()
+        email = email.strip()
 
         if not validate_email(email):
             print("Invalid email format.")
@@ -63,10 +62,11 @@ def add_employee():
         connection.close()
 
 def view_employees():
+
     connection = get_connection()
 
     if connection is None:
-        return
+        return []
 
     try:
         cursor = connection.cursor()
@@ -77,31 +77,17 @@ def view_employees():
 
         employees = cursor.fetchall()
 
-        if not employees:
-            print("No employees found.")
-            return
-
-        print("\n----- Employee Records -----")
-
-        for emp in employees:
-            print(f"""
-ID: {emp[0]}
-Name: {emp[1]}
-Department: {emp[2]}
-Salary: {emp[3]}
-Email: {emp[4]}
-Created At: {emp[5]}
------------------------------
-""")
+        return employees
 
     except Error as e:
         print("Error:", e)
+        return []
 
     finally:
         cursor.close()
         connection.close()
 
-def search_employee():
+def search_employee(emp_id):
     connection = get_connection()
 
     if connection is None:
@@ -110,11 +96,6 @@ def search_employee():
     try:
         cursor = connection.cursor()
 
-        emp_id = input("Enter Employee ID: ")
-
-        if not emp_id.isdigit():
-            print("Invalid ID.")
-            return
 
         query = "SELECT * FROM employees WHERE id = %s"
 
@@ -122,17 +103,7 @@ def search_employee():
 
         employee = cursor.fetchone()
 
-        if employee:
-            print(f"""
-ID: {employee[0]}
-Name: {employee[1]}
-Department: {employee[2]}
-Salary: {employee[3]}
-Email: {employee[4]}
-Created At: {employee[5]}
-""")
-        else:
-            print("Employee not found.")
+        return employee
 
     except Error as e:
         print("Error:", e)
@@ -141,26 +112,18 @@ Created At: {employee[5]}
         cursor.close()
         connection.close()
 
-def update_salary():
+def update_salary(emp_id, new_salary):
+
     connection = get_connection()
 
     if connection is None:
-        return
+        return False
 
     try:
         cursor = connection.cursor()
 
-        emp_id = input("Enter Employee ID: ")
-
-        if not emp_id.isdigit():
-            print("Invalid ID.")
-            return
-
-        new_salary = input("Enter New Salary: ")
-
         if not validate_salary(new_salary):
-            print("Invalid salary.")
-            return
+            return False
 
         query = """
         UPDATE employees
@@ -170,130 +133,101 @@ def update_salary():
 
         cursor.execute(query, (
             float(new_salary),
-            int(emp_id)
+            emp_id
         ))
 
         connection.commit()
 
-        if cursor.rowcount == 0:
-            print("Employee not found.")
-        else:
-            print("Salary updated successfully.")
+        return cursor.rowcount > 0
 
     except Error as e:
         print("Error:", e)
+        return False
 
     finally:
         cursor.close()
         connection.close()
 
-def delete_employee():
+def delete_employee(emp_id):
+
     connection = get_connection()
 
     if connection is None:
-        return
+        return False
 
     try:
         cursor = connection.cursor()
-
-        emp_id = input("Enter Employee ID: ")
-
-        if not emp_id.isdigit():
-            print("Invalid ID.")
-            return
 
         query = "DELETE FROM employees WHERE id = %s"
 
-        cursor.execute(query, (int(emp_id),))
+        cursor.execute(query, (emp_id,))
 
         connection.commit()
 
-        if cursor.rowcount == 0:
-            print("Employee not found.")
-        else:
-            print("Employee deleted successfully.")
+        return cursor.rowcount > 0
 
     except Error as e:
         print("Error:", e)
+        return False
 
     finally:
         cursor.close()
         connection.close()
 
-def search_by_department():
+def search_by_department(department):
+
     connection = get_connection()
 
     if connection is None:
-        return
+        return []
 
     try:
         cursor = connection.cursor()
-
-        department = input("Enter Department Name: ")
 
         query = """
         SELECT * FROM employees
         WHERE department ILIKE %s
         """
-
-        cursor.execute(query, (department,))
+        department=department.strip()
+        cursor.execute(query, (f"%{department}%",))
 
         employees = cursor.fetchall()
 
-        if employees:
-            for emp in employees:
-                print(f"""
-                      ID: {emp[0]}
-                      Name: {emp[1]}
-                      Department: {emp[2]}
-                      Salary: {emp[3]}
-                      Email: {emp[4]}
-                      Created At: {emp[5]}
-                      -----------------------------
-                      """)
-        else:
-            print("No employees found.")
+        return employees
 
     except Error as e:
         print("Error:", e)
+        return []
 
     finally:
         cursor.close()
         connection.close()
 
-def sort_by_salary():
+def sort_by_salary(order):
+
     connection = get_connection()
 
     if connection is None:
-        return
+        return []
 
     try:
         cursor = connection.cursor()
 
-        query = """
-        SELECT * FROM employees
-        ORDER BY salary DESC
-        """
+        if order == "Ascending":
+            query = "SELECT * FROM employees ORDER BY salary ASC"
+        else:
+            query = "SELECT * FROM employees ORDER BY salary DESC"
 
         cursor.execute(query)
 
         employees = cursor.fetchall()
 
-        for emp in employees:
-            print(f"""
-                      ID: {emp[0]}
-                      Name: {emp[1]}
-                      Department: {emp[2]}
-                      Salary: {emp[3]}
-                      Email: {emp[4]}
-                      Created At: {emp[5]}
-                      -----------------------------
-                      """)
+        return employees
 
     except Error as e:
         print("Error:", e)
+        return []
 
     finally:
         cursor.close()
         connection.close()
-
