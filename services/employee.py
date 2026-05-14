@@ -6,11 +6,15 @@ from services.validator import (
     validate_salary,
 )
 
-def add_employee(employee_name,department,salary,email):
+from psycopg2 import Error
+from config.db import get_connection
+
+def add_employee(employee_name, department, salary, email):
+
     connection = get_connection()
 
     if connection is None:
-        return
+        return False, "Database connection failed"
 
     try:
         cursor = connection.cursor()
@@ -18,21 +22,17 @@ def add_employee(employee_name,department,salary,email):
         employee_name = employee_name.strip()
 
         if not validate_name(employee_name):
-            print("Employee name cannot be empty.")
-            return
+            return False, "Employee name cannot be empty"
 
         department = department.strip()
 
-
         if not validate_salary(salary):
-            print("Invalid salary.")
-            return
+            return False, "Invalid salary"
 
         email = email.strip()
 
         if not validate_email(email):
-            print("Invalid email format.")
-            return
+            return False, "Invalid email format"
 
         query = """
         INSERT INTO employees (employee_name, department, salary, email)
@@ -48,14 +48,14 @@ def add_employee(employee_name,department,salary,email):
 
         connection.commit()
 
-        print("Employee added successfully.")
+        return True, "Employee added successfully"
 
     except Error as e:
 
         if "duplicate key value" in str(e):
-            print("Email already exists.")
+            return False, "Email already exists"
         else:
-            print("Database Error:", e)
+            return False, f"Database Error: {e}"
 
     finally:
         cursor.close()
