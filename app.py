@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import base64
 from services.export import export_to_csv
 from services.employee import(
     add_employee,
@@ -11,14 +12,38 @@ from services.employee import(
     search_employee,
 )
 
+def get_base64(file):
+    with open(file, "rb") as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+bg_image = get_base64("assets/bg.png")
+
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{bg_image}");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.set_page_config(
     page_title="Employee_Management_System",
     page_icon="assets/office.png",
     layout='wide'
 )
 
-st.image("assets/office.png",width=120)
-st.title("Employee Management System")
+st.markdown(
+    "<h1 style='color:black;'>Employee Management System</h1>",
+    unsafe_allow_html=True
+)
 
 choice = st.sidebar.selectbox(
     "MENU",
